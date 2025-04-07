@@ -14,10 +14,18 @@ const userSchema = mongoose.Schema({
         type:String,
         required:true
     },
+    isBlocked: {
+        type: Boolean,
+        default : false
+    },
     type:{
         type:String,
         default:"customer"
     },
+    //profilePicture :{
+      //  type : String,
+        //default : " "
+    //},
     password:{
         type:String,
         required:true
