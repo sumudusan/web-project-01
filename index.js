@@ -2,6 +2,7 @@ import bodyParser from 'body-parser';
 import express from 'express';
 import mongoose from 'mongoose';
 import userRouter from './routes/userrouter.js';
+import productRouter from './routes/productrouter.js';
 
 const app=express();
 
@@ -15,7 +16,7 @@ connection.once("open", ()=>{
 app.use(bodyParser.json())
 
 app.use("/api/users", userRouter)
-
+app.use("/api/products", productRouter)
 
 
 
