@@ -3,6 +3,8 @@ import express from 'express';
 import mongoose from 'mongoose';
 import userRouter from './routes/userrouter.js';
 import productRouter from './routes/productrouter.js';
+import { decode } from 'jsonwebtoken';
+import jwt from "jsonwebtoken"
 
 const app=express();
 
@@ -14,6 +16,27 @@ connection.once("open", ()=>{
 })
 
 app.use(bodyParser.json())
+
+//make own middleware   : if we send a token with a req ,this middleware will get
+//it and pass the correct router (ex:userRouter,productRouter ) to that token. 
+app.use(
+    (req, res, next)=>{
+        
+        const token = req.header("Authorization")?.replace("Bearer" , "")
+        console.log(token)
+
+        if(token != null){
+            jwt.verify(token ,"cbc-secret-key-7973 " , (error,decoded)=>{
+                if(!error){
+                    console.log(decoded)
+                    req.user= decoded
+                }
+            })
+        }
+     next()
+    }
+    
+)
 
 app.use("/api/users", userRouter)
 app.use("/api/products", productRouter)

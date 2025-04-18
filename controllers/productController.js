@@ -1,10 +1,24 @@
 import Product from "../models/product.js";
 
+
 export function addProduct (req,res){
 
-    const productDetails = req.body
+    console.log(req.user)
 
-    const product = new Product (productDetails)
+    if(req.user== null){
+        res.json({
+            message : "You are not logged in"
+        })
+        return
+    }
+
+    if(req.user.type !="admin"){
+        res.json({
+            message :"you are not an admin"
+        })
+    }
+
+    const product = new Product (req.body)
 
 
     product.save().then(()=>{
@@ -18,4 +32,38 @@ export function addProduct (req,res){
     })
     
     
+}
+
+// export function getProduct(req, res){
+
+//     Product.find().then(
+
+//         (productList)=>{
+//             res.status(200).json({
+//                 list: productList
+//             })
+//         }
+//     ).catch(
+//         (err)=>{
+//             res.json({
+//                 message : "Error"
+//             })
+//         }
+//     )
+// }
+
+export async function getProduct(req,res){
+
+    try{
+        const productList = await Product.find()
+
+        res.json({
+            list : productList
+        })
+    }catch(e){
+        res.json({
+            message : "Error"
+        })
+    }
+   
 }
