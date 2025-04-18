@@ -44,7 +44,7 @@ export function loginUser(req,res){
                         lastName : user.lastName,
                         isBlocked : user.isBlocked,
                     
-                    }, "cbc-secret-key-7973")
+                    }, process.env.SECRET)
                     console.log(token)
 
                     res.json({

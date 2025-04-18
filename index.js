@@ -5,10 +5,12 @@ import userRouter from './routes/userrouter.js';
 import productRouter from './routes/productrouter.js';
 import { decode } from 'jsonwebtoken';
 import jwt from "jsonwebtoken"
+import dotenv from "dotenv";
+dotenv.config()
 
 const app=express();
 
-const mongoUrl = "mongodb+srv://root:123@cluster0.dgneb.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+const mongoUrl = process.env.MONGO_DB_URL
 mongoose.connect(mongoUrl,{})
 const connection = mongoose.connection;
 connection.once("open", ()=>{
@@ -26,7 +28,7 @@ app.use(
         console.log(token)
 
         if(token != null){
-            jwt.verify(token ,"cbc-secret-key-7973 " , (error,decoded)=>{
+            jwt.verify(token , process.env.SECRET , (error,decoded)=>{
                 if(!error){
                     console.log(decoded)
                     req.user= decoded
