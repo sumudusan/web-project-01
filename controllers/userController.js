@@ -1,10 +1,15 @@
 import User from "../models/user.js";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
+import dotenv from "dotenv"
+dotenv.config()
+
+// "email": "aaa@gmail.com",
+// "password": "123"
 
 export function createUser(req, res){
 
-    const newUserData = req.body
+   const newUserData = req.body
 
     newUserData.password = bcrypt.hashSync(newUserData.password, 10)
 
@@ -60,4 +65,19 @@ export function loginUser(req,res){
 
         }
     )
+}
+
+export async function getUsers(req, res){
+
+    try{
+        const userList = await User.find()
+
+        res.json({
+            list : userList
+        })
+    }catch(e){
+        res.json({
+            message : "Error"
+        })
+    }
 }
