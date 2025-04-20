@@ -1,15 +1,35 @@
 import User from "../models/user.js";
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
-import dotenv from "dotenv"
-dotenv.config()
+import dotenv from "dotenv";
+dotenv.config();
 
+//admin
 // "email": "aaa@gmail.com",
 // "password": "123"
 
 export function createUser(req, res){
 
-   const newUserData = req.body
+    const newUserData = req.body
+
+   if(newUserData.type == "admin"){
+
+    if(req.user==null){
+        res.json({
+            message :"Please login "
+        })
+        return
+    }
+    
+
+    if(req.user.type != "admin"){
+        res.json({
+            message :"Please login as a administartor to create admin accounts"
+        })
+        return
+    }
+    
+   }
 
     newUserData.password = bcrypt.hashSync(newUserData.password, 10)
 
@@ -28,41 +48,44 @@ export function createUser(req, res){
 
 
 export function loginUser(req,res){
-
-    User.find({email :req.body.email}).then(
+    User.find({email: req.body.email}).then(
         (users)=>{
-            if(users.length ==0){
+            if(users.length == 0){
                 res.json({
-                    message : "User not found"
+                    message:"User not found"
                 })
-            }else{
-                 
-                const user = users [0]  
+            }
+            else{
+                const user=users[0]
 
-                const isPasswordCorrect = bcrypt.compareSync(req.body.password, user.password)
-
+                const isPasswordCorrect =bcrypt.compareSync(req.body.password,user.password)
+           
+              //  A JWT (JSON Web Token) is used for secure authentication and data exchange between a client and a server 
                 if(isPasswordCorrect){
-                    
-                    const token = jwt.sign({
-                        email : user.email,
-                        firstName : user.firstName,
-                        lastName : user.lastName,
-                        isBlocked : user.isBlocked,
-                    
-                    }, process.env.SECRET)
-                    console.log(token)
+                    const token =jwt.sign({
+                        email:user.email,
+                        firstName:user.firstName,
+                        lastName:user.lastName,
+                        isBlocked:user.isBlocked,
+                        type:user.type
+                    } , process.env.SECRET)
 
                     res.json({
-                        message:"user logged in",
-                        token : token
+                        message:"User logged in",
+                        token:token,
+                        user: { email: user.email,
+                            firstName: user.firstName,
+                            lastName: user.lastName,
+                            type:user.type
+                        }
                     })
-                }else{
+                }
+                else{
                     res.json({
-                        message : "user not logged in.wrong password"
+                        message:"user not logged in (wrong password)"
                     })
                 }
             }
-
         }
     )
 }
