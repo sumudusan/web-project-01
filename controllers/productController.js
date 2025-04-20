@@ -1,7 +1,15 @@
 import Product from "../models/product.js";
+import { isAdmin } from "./userController.js";
 
 
-export function addProduct (req,res){
+export function  createProduct (req,res){
+
+    if(!isAdmin(req)){
+        res.json({
+            message : "Please logihn as administrator to add products"
+        })
+        return
+    }
 
     console.log(req.user)
 
@@ -23,11 +31,11 @@ export function addProduct (req,res){
 
     product.save().then(()=>{
         res.json({
-        message: "Product Added"
+        message: "Product created"
     })
-    }).catch(()=>{
+    }).catch((error)=>{
         res.json({
-            message: "Product not added"
+            message: error 
         })
     })
     
