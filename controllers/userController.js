@@ -8,6 +8,10 @@ dotenv.config();
 // "email": "aaa@gmail.com",
 // "password": "123"
 
+//customer
+// "email": "ddd@gmail.com",
+// "password": "123"
+
 export function createUser(req, res){
 
     const newUserData = req.body

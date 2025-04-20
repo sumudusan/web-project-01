@@ -6,6 +6,7 @@ import productRouter from './routes/productrouter.js';
 import jwt from "jsonwebtoken"
 import cors from "cors";
 import dotenv from "dotenv";
+import orderRouter from './routes/orderRouter.js';
 dotenv.config()
 
 const app=express();
@@ -40,7 +41,7 @@ app.use(
 
 app.use("/api/users", userRouter)
 app.use("/api/products", productRouter)
-
+app.use("/api/orders", orderRouter)
 
 
 //1.14 day 3 paused
