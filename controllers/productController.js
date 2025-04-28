@@ -2,46 +2,31 @@ import Product from "../models/product.js";
 import { isAdmin } from "./userController.js";
 
 
-export function  createProduct (req,res){
-
-    if(!isAdmin(req)){
-        res.json({
-            message : "Please logihn as administrator to add products"
-        })
-        return
+export function createProduct(req, res) {
+    if (!req.user || req.user.type !== "admin") {
+      return res.status(403).json({
+        message: "You must be logged in as an admin to add products.",
+      });
     }
-
-    console.log(req.user)
-
-    if(req.user== null){
+  
+    const product = new Product(req.body);
+  
+    product
+      .save()
+      .then((savedProduct) => {
         res.json({
-            message : "You are not logged in"
-        })
-        return
-    }
-
-    if(req.user.type !="admin"){
-        res.json({
-            message :"you are not an admin"
-        })
-        return;
-    }
-
-    const product = new Product (req.body)
-
-
-    product.save().then(()=>{
-        res.json({
-        message: "Product created"
-    })
-    }).catch((error)=>{
-        res.json({
-            message: error 
-        })
-    })
-    
-    
-}
+          message: "Product created successfully",
+          product: savedProduct, // Optionally send back the created product
+        });
+      })
+      .catch((error) => {
+        res.status(500).json({
+          message: "Error creating product",
+          error: error.message,
+        });
+      });
+  }
+  
 
 // export function getProduct(req, res){
 
