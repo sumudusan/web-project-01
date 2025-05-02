@@ -3,12 +3,13 @@ import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import cors from "cors"
 
-import userRouter from "./routes/userrouter.js";
+
 import jwt from "jsonwebtoken";
 import { authenticateUser } from "./controllers/userController.js";
 import dotenv from "dotenv";
 import productRouter from "./routes/productRouter.js";
 import orderRouter from "./routes/orderRouter.js";
+import userRouter from "./routes/userrouter.js";
 dotenv.config();
 
 const app = express();
