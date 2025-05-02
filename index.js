@@ -1,53 +1,56 @@
-import bodyParser from 'body-parser';
-import express from 'express';
-import mongoose from 'mongoose';
-import userRouter from './routes/userrouter.js';
-import productRouter from './routes/productrouter.js';
-import jwt from "jsonwebtoken"
-import cors from "cors";
+import express from "express";
+import bodyParser from "body-parser";
+import mongoose from "mongoose";
+import cors from "cors"
+
+import userRouter from "./routes/userRouter.js";
+import jwt from "jsonwebtoken";
+import { authenticateUser } from "./controllers/userController.js";
 import dotenv from "dotenv";
-import orderRouter from './routes/orderRouter.js';
-dotenv.config()
+import productRouter from "./routes/productrouter.js";
+import orderRouter from "./routes/orderRouter.js";
+dotenv.config();
 
-const app=express();
-app.use(cors())
+const app = express();
+app.use(express.json());
+app.use(authenticateUser);
 
-const mongoUrl = process.env.MONGO_DB_URL
-mongoose.connect(mongoUrl,{})
+const mongoURL = process.env.MONGO_DB_URL;
+app.use(cors());
+
+mongoose.connect(mongoURL, {});
 const connection = mongoose.connection;
-connection.once("open", ()=>{
-    console.log("Database Connected");
-})
 
-app.use(bodyParser.json())
+connection.once("open", () => {
+  console.log("Database Connected");
+});
 
-//make own middleware   : if we send a token with a req ,this middleware will get
-//it and pass the correct router (ex:userRouter,productRouter ) to that token. 
-app.use(
-    (req, res, next)=>{
-        
-        const token = req.header("Authorization")?.replace('Bearer ' , '')
-        console.log(token)
+//-------------middleware-----------//
 
-        if(token ){
-            jwt.verify(token , process.env.SECRET , (error,decoded)=>{
-                if(!error){
-                    req.user= decoded
-                }
-            })
-        }
-     next();
+app.use(bodyParser.json());
+
+app.use((req, res, next) => {
+  const token = req.header("Authorization")?.replace("Bearer ", "");
+  console.log(token);
+
+  if (token != null) {
+    jwt.verify(token, process.env.SECRET, (error,decoded) => {
+      if (!error) {
+        console.log(decoded);
+        req.user = decoded;
+      }
     });
+  }
 
-app.use("/api/users", userRouter)
-app.use("/api/products", productRouter)
-app.use("/api/orders", orderRouter)
+  next();
+});
 
+//---------------------------------//
 
-//1.14 day 3 paused
+app.use("/api/users", userRouter);
+app.use("/api/products", productRouter);
+app.use("/api/orders", orderRouter);
+
 app.listen(5000, () => {
-    console.log('Server is running on port 5000');
-  });
-
-
- // DUWYl5LQEy4Q6Dj8
+  console.log("server is running on port 5000");
+});

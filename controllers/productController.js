@@ -3,13 +3,16 @@ import { isAdmin } from "./userController.js";
 
 
 export function createProduct(req, res) {
-    if (!req.user || req.user.type !== "admin") {
-      return res.status(403).json({
-        message: "You must be logged in as an admin to add products.",
-      });
-    }
+  if (!isAdmin(req)) {
+    res.json({
+      message: "Please login as administrator to add products",
+    });
+    return;
+  }
   
-    const product = new Product(req.body);
+    const newProductData = req.body;
+
+    const product = new Product(newProductData);
   
     product
       .save()

@@ -11,6 +11,26 @@ dotenv.config();
 //customer
 // "email": "ddd@gmail.com",
 // "password": "123"
+export function authenticateUser(req, res, next) {
+    const authHeader = req.headers.authorization;
+  
+    if (!authHeader) {
+      req.user = null;
+      return next();
+    }
+  
+    const token = authHeader.split(" ")[1]; // Format: "Bearer <token>"
+  
+    try {
+      const decoded = jwt.verify(token, process.env.SECRET);
+      req.user = decoded;
+    } catch (err) {
+      req.user = null;
+    }
+  
+    next();
+  }
+  
 
 export function createUser(req, res){
 
@@ -109,17 +129,11 @@ export async function getUsers(req, res){
     }
 }
 
-export function isAdmin(req){
-    if(req.user==null){
-        return false
-    }
-
-    if(req.user.type != "admin"){
-        return false
-    }
-
-    return true
-}
+export function isAdmin(req) {
+    if (req.user == null) return false;
+    return req.user.type === "admin";
+  }
+  
 
 export function isCustomer(req){
 
