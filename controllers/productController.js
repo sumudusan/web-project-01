@@ -89,7 +89,7 @@ export function deleteProduct(req,res){
     })
 }
 
-export function updateProduct(){
+export function updateProduct(req, res){
   if(!isAdmin(req)){
     res.status(403).json({
       message : "Please login as a administrator to update a products"
