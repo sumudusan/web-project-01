@@ -36,3 +36,11 @@ const userSchema = mongoose.Schema({
 const User = mongoose.model("users", userSchema)
 
 export default User;
+
+//admin
+// "email": "aaa@gmail.com",
+// "password": "123"
+
+//customer
+// "email": "ddd@gmail.com",
+// "password": "123"
