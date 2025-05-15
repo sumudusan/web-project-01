@@ -1,4 +1,5 @@
 import Order from "../models/order.js";
+import Product from "../models/product.js";
 import { isCustomer } from "./userController.js";
 
 export async function createOrder(req,res){
@@ -66,60 +67,55 @@ export async function getOrders(req, res){
     }
 }
 
-export async function getQuote(req,res){
-    //take the latest product Id
-    try{
-
-        const newOrderData = req.body
+export async function getQuote(req, res){
+    
+    try {
+        // Prepare order data
+        const newOrderData = req.body;
 
         const newProductArray = []
 
-        let total = 0;
-        let labeledTotal=0;
-
+        let total= 0;
+        let labeledTotal = 0;
 
         for(let i=0; i<newOrderData.orderedItems.length; i++){
-            
-            const product = await Product.findOne({
+            const product =await Product.findOne({
                 productId : newOrderData.orderedItems[i].productId
             })
 
-            
-            if(product == null){
+            if(product== null){
                 res.json({
-                    message : "Product with id "+newOrderData.orderedItems[i].productId+" not found"
-                })
+                    message: `Product with id ${newOrderData.orderedItems[i].productId} not found`
+                });
+                
                 return
             }
+            labeledTotal += product.price * newOrderData.orderedItems[i].qty;
+            total += product.lastPrice * newOrderData.orderedItems[i].qty;
 
-            labeledTotal += product.price * newOrderData.orderedItems[i].qty
-            total += product.lastPrice *  newOrderData.orderedItems[i].qty
-
-            newProductArray[i] = {
-                name : product.productName,
-                price : product.lastPrice,
-                labeledPrice : product.price,
-                quantity : newOrderData.orderedItems[i].qty,
-                image : product.images[0]
-            }
-
+             newProductArray[i] = {
+            name : product.productName,
+            price : product.lastPrice, 
+            labeledPrice : product.price,
+            quantity : newOrderData.orderedItems[i].qty,
+        image : product.images[0]
+           }
         }
-        console.log(newProductArray)
 
-        newOrderData.orderedItems = newProductArray
-        newOrderData.total = total;
+       console.log(newProductArray)
 
-        res.json({
-            orderedItems: newProductArray,
-            total : total,
-            labeledTotal : labeledTotal
-        })
+       newOrderData.orderedItems= newProductArray
+       newOrderData.total = total;
 
+       res.json({
+        orderedItems : newProductArray,
+        total: total,
+        labeledTotal: labeledTotal,
+       }); 
 
-
-    }catch(error){
+    } catch (error) {
         res.status(500).json({
-            message : error.message
-        })
+            message: error.message
+        });
     }
-  }
+}
