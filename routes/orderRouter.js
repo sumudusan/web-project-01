@@ -5,6 +5,6 @@ const orderRouter = express.Router();
 
 orderRouter.post("/createOrder", createOrder)
 orderRouter.get ("/getOrders", getOrders)
-orderRouter.get("/quote", getQuote)
+orderRouter.post("/quote", getQuote)
 
 export default orderRouter;
