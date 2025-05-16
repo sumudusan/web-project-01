@@ -14,8 +14,7 @@ export async function createOrder(req,res){
     
 
     try{
-        const latestOrder = await Order.find().sort
-    ({date : -1}).limit(1)
+        const latestOrder = await Order.find().sort({date : -1}).limit(1)
 
     let orderId
 
@@ -67,55 +66,56 @@ export async function getOrders(req, res){
     }
 }
 
-export async function getQuote(req, res){
-    
-    try {
-        // Prepare order data
-        const newOrderData = req.body;
+export async function getQuote(req, res) {
+  try {
+    const { orderedItems } = req.body;
 
-        const newProductArray = []
-
-        let total= 0;
-        let labeledTotal = 0;
-
-        for(let i=0; i<newOrderData.orderedItems.length; i++){
-            const product =await Product.findOne({
-                productId : newOrderData.orderedItems[i].productId
-            })
-
-            if(product== null){
-                res.json({
-                    message: `Product with id ${newOrderData.orderedItems[i].productId} not found`
-                });
-                
-                return
-            }
-            labeledTotal += product.price * newOrderData.orderedItems[i].qty;
-            total += product.lastPrice * newOrderData.orderedItems[i].qty;
-
-             newProductArray[i] = {
-            name : product.productName,
-            price : product.lastPrice, 
-            labeledPrice : product.price,
-            quantity : newOrderData.orderedItems[i].qty,
-        image : product.images[0]
-           }
-        }
-
-       console.log(newProductArray)
-
-       newOrderData.orderedItems= newProductArray
-       newOrderData.total = total;
-
-       res.json({
-        orderedItems : newProductArray,
-        total: total,
-        labeledTotal: labeledTotal,
-       }); 
-
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
+    if (!orderedItems || !Array.isArray(orderedItems) || orderedItems.length === 0) {
+      return res.status(400).json({
+        message: "No ordered items found in request.",
+      });
     }
+
+    const newProductArray = [];
+    let total = 0;
+    let labeledTotal = 0;
+
+    for (let i = 0; i < orderedItems.length; i++) {
+      const { productId, qty } = orderedItems[i];
+
+      const product = await Product.findOne({ productId });
+
+      if (!product) {
+        // Optional: you can choose to skip this item or notify the user
+        console.warn(`Product with ID ${productId} not found.`);
+        continue;
+      }
+
+      const itemTotal = product.lastPrice * qty;
+      const itemLabeledTotal = product.price * qty;
+
+      labeledTotal += itemLabeledTotal;
+      total += itemTotal;
+
+      newProductArray.push({
+        name: product.productName,
+        price: product.lastPrice,
+        labeledPrice: product.price,
+        quantity: qty,
+        image: product.images?.[0] || "",
+      });
+    }
+
+    res.json({
+      orderedItems: newProductArray,
+      total,
+      labeledTotal,
+    });
+
+  } catch (error) {
+    console.error("Error generating quote:", error);
+    res.status(500).json({
+      message: error.message || "Server error while generating quote.",
+    });
+  }
 }
