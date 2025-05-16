@@ -1,6 +1,7 @@
 import User from "../models/user.js";
 import bcrypt from "bcryptjs"; // ✅ changed from 'bcrypt'
 import jwt from "jsonwebtoken";
+import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -95,9 +96,12 @@ export async function loginUser(req, res) {
     } else {
       res.json({ message: "User not logged in (wrong password)" });
     }
-  } catch (error) {
-    res.json({ message: "Error logging in", error: error.message });
-  }
+ } catch (e) {
+  console.error("Google login error:", e?.response?.data || e.message || e);
+  res.json({
+    message: "Google login failed"
+  });
+}
 }
 
 // Get all users
@@ -119,82 +123,85 @@ export function isCustomer(req) {
   return req.user && req.user.type === "customer";
 }
 
-export async function googleLogin(req,res){
-  const token = req.body.token
-  //'https://www.googleapis.com/oauth2/v3/userinfo'
-  try{
-    const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo',{
+export async function googleLogin(req, res) {
+  const token = req.body.token;
+
+  try {
+    const response = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: {
         Authorization: `Bearer ${token}`
       }
-    })
+    });
 
-    const email = response.data.email
-    //check if user exists
-    const usersList = await User.find({email: email})
-    if(usersList.length >0){
-      const user = usersList[0]
+    // ✅ Log the full response from Google to see what fields are available
+    console.log("Google user data:", response.data);
+
+    const email = response.data.email;
+
+    // Check if user exists
+    const usersList = await User.find({ email: email });
+    if (usersList.length > 0) {
+      const user = usersList[0];
       const token = jwt.sign({
-        email : user.email,
-        firstName : user.firstName,
-        lastName : user.lastName,
-        isBlocked : user.isBlocked,
-        type : user.type,
-        profilePicture : user.profilePicture
-      } , process.env.SECRET)
-      
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isBlocked: user.isBlocked,
+        type: user.type,
+        profilePicture: user.profilePicture
+      }, process.env.SECRET);
+
       res.json({
         message: "User logged in",
         token: token,
-        user : {
-          firstName : user.firstName,
-          lastName : user.lastName,
-          type : user.type,
-          profilePicture : user.profilePicture,
-          email : user.email
+        user: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          type: user.type,
+          profilePicture: user.profilePicture,
+          email: user.email
         }
-      })
-    }else{
-      //create new user
+      });
+    } else {
+      // Create new user
       const newUserData = {
-        email: email,
-        firstName: response.data.given_name,
-        lastName: response.data.family_name,
-        type: "customer",
-        password: "ffffff",
-        profilePicture: response.data.picture
-      }
-      const user = new User(newUserData)
-     await user.save();
+  email: email,
+  firstName: response.data.given_name || "Google",
+  lastName: response.data.family_name || "User",
+  type: "customer",
+  password: "ffffff", // optionally randomize or handle differently
+  profilePicture: response.data.picture || ""
+};
 
-const userToken = jwt.sign({
-  email: user.email,
-  firstName: user.firstName,
-  lastName: user.lastName,
-  isBlocked: user.isBlocked,
-  type: user.type,
-  profilePicture: user.profilePicture
-}, process.env.SECRET);
+      const user = new User(newUserData);
+      await user.save();
 
-res.json({
-  message: "User created",
-  token: userToken,
-  user: {
-    firstName: user.firstName,
-    lastName: user.lastName,
-    type: user.type,
-    profilePicture: user.profilePicture,
-    email: user.email
-  }
-});
+      const token = jwt.sign({
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isBlocked: user.isBlocked,
+        type: user.type,
+        profilePicture: user.profilePicture
+      }, process.env.SECRET);
 
-
+      res.json({
+        message: "User logged in",
+        token: token,
+        user: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          type: user.type,
+          profilePicture: user.profilePicture,
+          email: user.email
+        }
+      });
     }
 
-  }catch(e){
+  } catch (e) {
+    console.error(e);
     res.json({
       message: "Google login failed"
-    })
+    });
   }
-
 }
