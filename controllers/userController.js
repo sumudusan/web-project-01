@@ -165,15 +165,29 @@ export async function googleLogin(req,res){
         profilePicture: response.data.picture
       }
       const user = new User(newUserData)
-      user.save().then(()=>{
-        res.json({
-          message: "User created"
-        })
-      }).catch((error)=>{
-        res.json({      
-          message: "User not created"
-        })
-      })
+     await user.save();
+
+const userToken = jwt.sign({
+  email: user.email,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  isBlocked: user.isBlocked,
+  type: user.type,
+  profilePicture: user.profilePicture
+}, process.env.SECRET);
+
+res.json({
+  message: "User created",
+  token: userToken,
+  user: {
+    firstName: user.firstName,
+    lastName: user.lastName,
+    type: user.type,
+    profilePicture: user.profilePicture,
+    email: user.email
+  }
+});
+
 
     }
 
