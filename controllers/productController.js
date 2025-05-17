@@ -49,20 +49,30 @@ export function createProduct(req, res) {
 //     )
 // }
 
-export async function getProduct(req,res){
+export async function getProduct(req, res) {
+  try {
+    const productList = await Product.find();
+    res.json({
+      products: productList, // fixed key
+    });
+  } catch (e) {
+    res.status(500).json({ message: "Error" });
+  }
+}
 
-    try{
-        const productList = await Product.find()
-
-        res.json({
-            list : productList
-        })
-    }catch(e){
-        res.json({
-            message : "Error"
-        })
-    }
-   
+export async function searchProducts(req, res) {
+  const query = req.params.query;
+  try {
+    const products = await Product.find({
+      $or: [
+        { productName: { $regex: query, $options: "i" } },
+        { altNames: { $elemMatch: { $regex: query, $options: "i" } } },
+      ],
+    });
+    res.json({ products }); // wrap in object
+  } catch (e) {
+    res.status(500).json({ message: "Search failed", error: e.message });
+  }
 }
 
 export function deleteProduct(req,res){
@@ -126,3 +136,4 @@ export async function getProductById(req, res) {
     });
   }
 }
+
