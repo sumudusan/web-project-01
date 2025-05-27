@@ -30,29 +30,33 @@ export function authenticateUser(req, res, next) {
 export async function createUser(req, res) {
   const newUserData = req.body;
 
-  if (newUserData.type === "admin") {
-    if (!req.user) {
-      return res.json({ message: "Please login" });
-    }
-
-    if (req.user.type !== "admin") {
-      return res.json({
-        message: "Please login as an administrator to create admin accounts",
-      });
-    }
-  }
-
   try {
-    // ✅ Use bcryptjs to hash password
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: newUserData.email });
+    if (existingUser) {
+      return res.json({ message: "Email already registered" });
+    }
+
+    // Only admin can create another admin
+    if (newUserData.type === "admin") {
+      if (!req.user || req.user.type !== "admin") {
+        return res.json({
+          message: "Please login as an administrator to create admin accounts",
+        });
+      }
+    }
+
+    // Hash password
     newUserData.password = await bcrypt.hash(newUserData.password, 10);
     const user = new User(newUserData);
     await user.save();
 
-    res.json({ message: "User created" });
+    res.json({ message: "User created", user });
   } catch (error) {
     res.json({ message: "User not created", error: error.message });
   }
 }
+
 
 // Login existing user
 export async function loginUser(req, res) {
