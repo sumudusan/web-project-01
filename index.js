@@ -10,6 +10,7 @@ import dotenv from "dotenv";
 import productRouter from "./routes/productrouter.js";
 import orderRouter from "./routes/orderRouter.js";
 import userRouter from "./routes/userrouter.js";
+import contactRouter from "./routes/contactRouter.js";
 dotenv.config();
 
 const app = express();
@@ -51,6 +52,7 @@ app.use((req, res, next) => {
 app.use("/api/users", userRouter);
 app.use("/api/products", productRouter);
 app.use("/api/orders", orderRouter);
+app.use("/api/contact", contactRouter);
 
 app.listen(5000, () => {
   console.log("server is running on port 5000");
