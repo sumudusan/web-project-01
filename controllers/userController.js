@@ -6,25 +6,28 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Middleware to authenticate user via JWT
-export function authenticateUser(req, res, next) {
-  const authHeader = req.headers.authorization;
 
-  if (!authHeader) {
-    req.user = null;
-    return next();
+export function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : null;
+
+  if (!token) {
+    return res.status(401).json({ message: 'Token missing' });
   }
-
-  const token = authHeader.split(" ")[1]; // Format: "Bearer <token>"
 
   try {
     const decoded = jwt.verify(token, process.env.SECRET);
     req.user = decoded;
+    next();
   } catch (err) {
-    req.user = null;
+    console.error('JWT verification failed:', err.message);
+    return res.status(401).json({ message: 'Invalid token' });
   }
-
-  next();
 }
+
+
 
 // Create new user (admin/customer)
 export async function createUser(req, res) {
@@ -89,7 +92,7 @@ export async function loginUser(req, res) {
 
       res.json({
         message: "User logged in",
-        token,
+        token : token,
         user: {
           email: user.email,
           firstName: user.firstName,
@@ -108,15 +111,8 @@ export async function loginUser(req, res) {
 }
 }
 
-// Get all users
-export async function getUsers(req, res) {
-  try {
-    const userList = await User.find();
-    res.json({ list: userList });
-  } catch (e) {
-    res.json({ message: "Error", error: e.message });
-  }
-}
+
+
 
 // Role helpers
 export function isAdmin(req) {
@@ -212,7 +208,7 @@ export async function googleLogin(req, res) {
 
 
 export async function getUser(req,res){
-  if(req.user==null){
+  if(req.user==null || req.user.type !== "admin"){
     res.status(404).json({
       message : "please login to view user dtails"
     })
@@ -220,3 +216,20 @@ export async function getUser(req,res){
   }
   res.json(req.user)
 }
+
+{/* 
+export async function getAllUsers(req, res) {
+  console.log("DEBUG - req.user:", JSON.stringify(req.user, null, 2)); // ✅ Don't remove this
+
+  if (!req.user || req.user.type !== "admin") {
+    return res.status(403).json({ message: "Access denied. Admins only." });
+  }
+
+  try {
+    const users = await User.find({});
+    res.json({ list: users }); // ✅ Must keep this to avoid frontend hanging
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch users", error: error.message });
+  }
+}
+*/}
