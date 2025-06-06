@@ -17,25 +17,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ JWT Authentication Middleware
-app.use((req, res, next) => {
-  const authHeader = req.header("Authorization");
-
-  if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.replace("Bearer ", "");
-    try {
-      const decoded = jwt.verify(token, process.env.SECRET);
-      console.log("Authenticated:", decoded);
-      req.user = decoded;
-    } catch (err) {
-      console.log("Invalid token:", err.message);
-      // Optional: Uncomment if you want to block invalid tokens completely
-      // return res.status(401).json({ message: "Invalid or expired token" });
-    }
-  }
-
-  next(); // ✅ Call next after decoding (or skipping if no token)
-});
 
 // ---------- DATABASE CONNECTION ---------- //
 const mongoURL = process.env.MONGO_DB_URL;
