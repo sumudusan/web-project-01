@@ -228,6 +228,20 @@ export async function getUser(req, res) {
     return res.status(500).json({ message: "Failed to fetch user", error: error.message });
   }
 }
+// controllers/userController.js
+export async function getAllUsers(req, res) {
+  try {
+    if (!req.user || req.user.type !== "admin") {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    const users = await User.find().select("-password"); // Fetch all users
+
+    res.json({ list: users });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch users", error: error.message });
+  }
+}
   if(req.user==null || req.user.type !== "admin"){
     res.status(404).json({
       message : "please login to view user dtails"
