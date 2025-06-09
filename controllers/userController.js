@@ -228,6 +228,8 @@ export async function getUser(req, res) {
     return res.status(500).json({ message: "Failed to fetch user", error: error.message });
   }
 }
+
+
 // controllers/userController.js
 export async function getAllUsers(req, res) {
   try {
@@ -242,6 +244,27 @@ export async function getAllUsers(req, res) {
     res.status(500).json({ message: "Failed to fetch users", error: error.message });
   }
 }
+
+
+export async function deleteUserById(req, res) {
+  try {
+    if (!req.user || req.user.type !== "admin") {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    const user = await User.findByIdAndDelete(req.params.id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({ message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting user", error: error.message });
+  }
+}
+
+
+
+/*export async function getUser(req,res){
   if(req.user==null || req.user.type !== "admin"){
     res.status(404).json({
       message : "please login to view user dtails"
@@ -249,9 +272,10 @@ export async function getAllUsers(req, res) {
     return
   }
   res.json(req.user)
-}
+}*/
 
-{/* 
+
+/* 
 export async function getAllUsers(req, res) {
   console.log("DEBUG - req.user:", JSON.stringify(req.user, null, 2)); // ✅ Don't remove this
 
@@ -266,4 +290,4 @@ export async function getAllUsers(req, res) {
     res.status(500).json({ message: "Failed to fetch users", error: error.message });
   }
 }
-*/}
+*/
