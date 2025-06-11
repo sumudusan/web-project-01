@@ -270,3 +270,32 @@ export async function getUserCart(req, res) {
     res.status(500).json({ message: err.message });
   }
 }
+export async function removeCartItem(req, res) {
+  try {
+    console.log("Authenticated user:", req.user);
+
+    const userEmail = req.user?.email;
+    const { productId } = req.params;
+
+    if (!userEmail) {
+      return res.status(401).json({ message: "Unauthorized." });
+    }
+
+    const user = await User.findOne({ email: userEmail });
+
+    if (!user) {
+      console.warn("User not found:", userEmail);
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.cart = user.cart.filter(item => item.productId !== productId);
+    await user.save();
+
+    console.log(`Item ${productId} removed from ${userEmail}'s cart.`);
+    res.json({ message: "Item removed from cart", cart: user.cart });
+  } catch (err) {
+    console.error("removeCartItem error:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+}
+
