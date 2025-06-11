@@ -248,3 +248,25 @@ export async function saveUserCart(req, res) {
     res.status(500).json({ message: err.message });
   }
 }
+export async function getUserCart(req, res) {
+  try {
+    console.log("Authenticated user:", req.user);
+
+    if (!isCustomer(req)) {
+      return res.status(401).json({ message: "Unauthorized." });
+    }
+
+    const user = await User.findOne({ email: req.user.email });
+
+    if (!user) {
+      console.warn("User not found:", req.user.email);
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log("Returning cart:", user.cart);
+    res.json(user.cart || []);
+  } catch (err) {
+    console.error("getUserCart error:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+}

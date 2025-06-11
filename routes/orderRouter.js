@@ -4,4 +4,5 @@ import { createOrder, getOrders, getQuote, updateOrder } from "../controllers/or
 const orderRouter = express.Router();
 
 orderRouter.post("/cart/save", requireAuth, saveUserCart);
+orderRouter.get("/cart",requireAuth,  getUserCart);
 export default orderRouter;
