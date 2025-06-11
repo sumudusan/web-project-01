@@ -200,3 +200,51 @@ export async function updateOrder(req, res) {
       });
     }
   }
+// Save or update user's cart
+export async function saveUserCart(req, res) {
+  try {
+    if (!isCustomer(req)) {
+      return res.status(401).json({ message: "Unauthorized. Please login as a customer." });
+    }
+
+    const { cartItems } = req.body;
+
+    if (!Array.isArray(cartItems)) {
+      return res.status(400).json({ message: "Invalid cart data." });
+    }
+
+    const user = await User.findOne({ email: req.user.email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // If cartItems is empty, clear the cart
+    if (cartItems.length === 0) {
+      user.cart = [];
+      await user.save();
+      return res.json({ message: "Cart cleared successfully", cart: [] });
+    }
+
+    const currentCart = user.cart || [];
+
+    // Merge new cartItems into currentCart
+    cartItems.forEach(newItem => {
+      const index = currentCart.findIndex(item => item.productId === newItem.productId);
+
+      if (index > -1) {
+        currentCart[index].qty += newItem.qty;
+      } else {
+        currentCart.push(newItem);
+      }
+    });
+
+    user.cart = currentCart;
+    await user.save();
+
+    res.json({ message: "Cart updated successfully", cart: user.cart });
+  } catch (err) {
+    console.error("Cart save error:", err);
+    res.status(500).json({ message: err.message });
+  }
+}
