@@ -1,86 +1,59 @@
 import Order from "../models/order.js";
 import Product from "../models/product.js";
+import User from "../models/user.js";
 import {isAdmin, isCustomer } from "./userController.js";
 
-export async function createOrder(req,res){
+export async function createOrder(req, res) {
+  if (!isCustomer(req)) {
+    return res.json({ message: "Please login as customer to create order" });
+  }
 
-    if(!isCustomer(req)){
+  try {
+    const latestOrder = await Order.find().sort({ orderId: -1 }).limit(1);
+    let orderId = latestOrder.length === 0
+      ? "CBC0001"
+      : "CBC" + (parseInt(latestOrder[0].orderId.replace("CBC", "")) + 1).toString().padStart(4, "0");
 
-        res.json({
-            message : "Please login as customer to create order"
-        })
-        return;
+    const newOrderData = req.body;
+    const newProductArray = [];
+
+    for (let item of newOrderData.orderedItems) {
+      const product = await Product.findOne({ productId: item.productId });
+
+      if (!product) {
+        return res.json({ message: `Product with id ${item.productId} not found` });
+      }
+
+      newProductArray.push({
+        name: product.productName,
+        price: product.lastPrice,
+        quantity: item.qty,
+        image: product.images[0],
+      });
     }
-    
-    //take the latest product Id
-    try{
 
-        const latestOrder = await Order.find().sort({orderId : -1}).limit(1)
-        console.log(latestOrder)
-        
-        let orderId;
+    newOrderData.orderedItems = newProductArray;
+    newOrderData.orderId = orderId;
+    newOrderData.email = req.user.email;
 
-        if(latestOrder.length == 0){
-            orderId = "CBC0001";
-        }else{
+    const order = new Order(newOrderData);
+    const savedOrder = await order.save();
 
-            const currentOrderId = latestOrder[0].orderId
-            const numberString = currentOrderId.replace("CBC","")
-            const number = parseInt(numberString)
-            const newNumber = (number + 1).toString().padStart(4, "0")
-
-            orderId = "CBC" + newNumber;
-            
-        }
-        const newOrderData = req.body
-
-        const newProductArray = []
-
-        for(let i=0; i<newOrderData.orderedItems.length; i++){
-            
-            const product = await Product.findOne({
-                productId : newOrderData.orderedItems[i].productId
-            })
-
-            
-            if(product == null){
-                res.json({
-                    message : "Product with id "+newOrderData.orderedItems[i].productId+" not found"
-                })
-                return
-            }
-
-            newProductArray[i] = {
-                name : product.productName,
-                price : product.lastPrice,
-                quantity : newOrderData.orderedItems[i].qty,
-                image : product.images[0]
-            }
-
-        }
-        console.log(newProductArray)
-
-        newOrderData.orderedItems = newProductArray
-
-        newOrderData.orderId = orderId
-        newOrderData.email = req.user.email
-
-        const order = new Order(newOrderData)
-
-        const savedOrder = await order.save()
-
-        res.json({
-            message : "Order created",
-            order : savedOrder
-        })
-
-
-    }catch(error){
-        res.status(500).json({
-            message : error.message
-        })
+    // 🧹 Remove ordered items from user's cart
+    const user = await User.findOne({ email: req.user.email });
+    if (user) {
+      const orderedProductIds = newOrderData.orderedItems.map((item) => item.productId);
+      user.cart = user.cart.filter((item) => !orderedProductIds.includes(item.productId));
+      await user.save();
     }
+
+    res.json({ message: "Order created", order: savedOrder });
+  } catch (error) {
+    console.error("Order creation error:", error.message);
+    res.status(500).json({ message: error.message });
+  }
 }
+
 
 export async function getOrders(req,res){
     try{
@@ -200,6 +173,7 @@ export async function updateOrder(req, res) {
       });
     }
   }
+
 // Save or update user's cart
 export async function saveUserCart(req, res) {
   try {
@@ -248,6 +222,10 @@ export async function saveUserCart(req, res) {
     res.status(500).json({ message: err.message });
   }
 }
+
+
+
+
 export async function getUserCart(req, res) {
   try {
     console.log("Authenticated user:", req.user);
@@ -270,6 +248,7 @@ export async function getUserCart(req, res) {
     res.status(500).json({ message: err.message });
   }
 }
+
 export async function removeCartItem(req, res) {
   try {
     console.log("Authenticated user:", req.user);
@@ -298,6 +277,7 @@ export async function removeCartItem(req, res) {
     res.status(500).json({ message: err.message });
   }
 }
+
 
 export async function updateCartItemQuantity(req, res) {
   try {
