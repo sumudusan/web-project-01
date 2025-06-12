@@ -299,3 +299,41 @@ export async function removeCartItem(req, res) {
   }
 }
 
+export async function updateCartItemQuantity(req, res) {
+  try {
+    console.log("Authenticated user:", req.user);
+
+    const userEmail = req.user?.email;
+    const { productId, qty } = req.body;
+
+    if (!userEmail) {
+      return res.status(401).json({ message: "Unauthorized." });
+    }
+
+    if (!productId || typeof qty !== "number" || qty < 1) {
+      return res.status(400).json({ message: "Invalid product ID or quantity" });
+    }
+
+    const user = await User.findOne({ email: userEmail });
+
+    if (!user) {
+      console.warn("User not found:", userEmail);
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const cartItem = user.cart.find(item => item.productId === productId);
+
+    if (!cartItem) {
+      return res.status(404).json({ message: "Item not found in cart" });
+    }
+
+    cartItem.qty = qty;
+    await user.save();
+
+    console.log(`Quantity of ${productId} updated to ${qty} for ${userEmail}.`);
+    res.json({ message: "Cart item quantity updated", cart: user.cart });
+  } catch (err) {
+    console.error("updateCartItemQuantity error:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+}
